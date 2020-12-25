@@ -14,7 +14,32 @@ Author: Ivan Nardini (ivan.nardini@sas.com)
 """
 
 # Libraries
+import time
+import re
 from google.cloud import dataproc_v1 as dataproc
+from google.cloud import storage
+
+
+def check_if_cluster (project_id, region, cluster_name):
+    '''
+    Check if cluster already exists
+    :param cluster_client:
+    :param project_id:
+    :param region:
+    :param cluster_name:
+    :return:
+    '''
+
+    # Create a client with the endpoint set to the desired cluster region.
+    cluster_client = dataproc.ClusterControllerClient(
+        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+    )
+
+    try:
+        return cluster_client.get_cluster(project_id, region, cluster_name)
+    except RuntimeError as message:
+        return None
+
 
 def create_cluster (project_id, cluster_name, bucket_name, region, zone, pip_packages):
     '''
@@ -87,15 +112,58 @@ def create_cluster (project_id, cluster_name, bucket_name, region, zone, pip_pac
     }
 
     # Create the cluster.
-    operation = cluster_client.create_cluster(
+    cluster = cluster_client.create_cluster(
         request={"project_id": project_id, "region": region, "cluster": cluster}
     )
-    result = operation.result()
+    result = cluster.result()
 
     # Output a success message.
     print(f"Cluster created successfully: {result.cluster_name}")
 
-def main(event, context):
+    return cluster
+
+
+def submit_train_job (project_id, region, cluster_name):
+    '''
+    Submit batch train job
+    :param project_id:
+    :param region:
+    :param cluster_name:
+    :return: None
+    '''
+    # Create the job client.
+    job_client = dataproc.JobControllerClient(client_options={
+        'api_endpoint': '{}-dataproc.googleapis.com:443'.format(region)
+    })
+
+    # Create the job config.
+    # gcloud dataproc jobs submit pyspark gs://network-spark-migrate/model/train.py --cluster train-spark-demo
+    # --region europe-west6 --files=gs://network-spark-migrate/model/demo-config.yml -- --configfile ./demo-config.yml
+
+    job = {
+        'reference': {
+            'project_id': project_id,
+            'job_id': 'Batch_Train_Model'
+        },
+        'placement': {
+            'cluster_name': cluster_name
+        },
+        'pyspark_job': {
+            'main_python_file_uri': 'gs://network-spark-migrate/model/train.py',
+            'file_uris': ['gs://network-spark-migrate/model/demo-config.yml'],
+            'args': ['--configfile', './demo-config.yml']
+        }
+    }
+
+    operation = job_client.submit_job(
+        request={"project_id": project_id, "region": region, "job": job}
+    )
+    response = operation.reference.job_id
+
+    print(f"Job finished successfully: {response}")
+
+
+def main (event, context):
     '''
     Triggered by a change to a Cloud Storage bucket.
     :param event:
@@ -111,4 +179,15 @@ def main(event, context):
     ZONE = 'europe-west6-b'
     PIP_PACKAGES = "PyYAML==5.3.1 numpy==1.19.4 pandas==1.1.4 pyspark==3.0.1"
 
-    create_cluster(PROJECT_ID, CLUSTER_NAME, BUCKET_NAME, REGION, ZONE, PIP_PACKAGES)
+    # Create a client with the endpoint set to the desired cluster region.
+    cluster_client = dataproc.ClusterControllerClient(
+        client_options={"api_endpoint": f"{REGION}-dataproc.googleapis.com:443"}
+    )
+
+    # Because we upload several files in a loop, the function will be trigger n times where
+    # n is the number of files uploaded. We need to create a filter.
+
+    print(event['name'])
+    if event['name'] == 'model/train.py':
+        cluster = create_cluster(PROJECT_ID, CLUSTER_NAME, BUCKET_NAME, REGION, ZONE, PIP_PACKAGES)
+        cluster.add_done_callback(lambda _: submit_train_job(PROJECT_ID, REGION, CLUSTER_NAME))
