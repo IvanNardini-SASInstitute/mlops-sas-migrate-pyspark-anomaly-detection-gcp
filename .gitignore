@@ -1,5 +1,8 @@
 config/*.json
-docs/*
+docs/architecture
+docs/presentation
+docs/records
+docs/references
 data/interim/*
 data/processed/*
 env/*

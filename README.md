@@ -78,11 +78,40 @@ jobs in SAS Job Execution
 **Notice: Don't forget to double checks RESTAPIs endpoints in the workflow definition service tasks and 
 paths in the jobs**
 
+### Google Cloud Platform side
+
+You have to create a service account and generate a key
+for authentication as shown [here](https://cloud.google.com/docs/authentication/getting-started#auth-cloud-implicit-python).
+
+Then you have to enable all APIs you need:
+
+* Cloud Dataproc 
+* Cloud Logging 
+* Cloud Functions 
+* Cloud Storage
+
+If everything is correct, you can move on and 
+
+1. Create a bucket named **network-spark-migrate**
+
+2. Create these Cloud functions: **batch-train** and **batch-score**
+
+Please look at [cloud functions images folder](docs/images/cloud_functions/batch-train1.JPG)
+as reference.
+All code associated to cloud functions is under [cloudfunction](src/cloudfunction/batch_train/batch_train.py)
+
 ## Usage
 
 From SAS Model Manager project, start ModelOps for GCP workflow and user tasks one by one.
 
-Below some frames of the demo.
+If everything is correct, once you migrate the model, batch-train cloud function is triggered.
+It creates an ephemeral Dataproc cluster for training the model.
+Once the training ends, the train cluster is deleted and you get a
+new model ready for scoring.
+
+Assuming that you receive a scoring request, you can upload [parquet files](data/processed/ML-MATT-CompetitionQT1920_val_processed.parquet).
+The batch-score cloud function is triggered. It creates an ephemeral Dataproc cluster for scoring data and deletes it 
+once it finishes. 
 
 ## Contributing
 Feedbacks and Pull requests are welcome. 
