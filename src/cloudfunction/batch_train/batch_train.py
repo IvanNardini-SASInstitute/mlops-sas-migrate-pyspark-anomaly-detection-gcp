@@ -19,26 +19,8 @@ import logging.config
 import time
 from google.cloud import dataproc_v1 as dataproc
 
+
 # Helpers --------------------------------------------------------------------------------------------------------------
-
-def check_if_cluster (project_id, cluster_name, region):
-    '''
-    Check if cluster already exists
-    :param project_id:
-    :param cluster_name:
-    :param region:
-    :return:
-    '''
-
-    # Create a client with the endpoint set to the desired cluster region.
-    cluster_client = dataproc.ClusterControllerClient(
-        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
-    )
-
-    try:
-        return cluster_client.get_cluster(project_id, region, cluster_name)
-    except RuntimeError as message:
-        return None
 
 def create_cluster (project_id, cluster_name, bucket_name, region, zone, pip_packages):
     '''
@@ -143,7 +125,6 @@ def check_job_state (project_id, region, job_id):
         request={"project_id": project_id, "region": region, "job_id": job_id}
     )
     job_state = str.lower(str(job_instance.status.state))
-
     return job_state
 
 def submit_train_job (project_id, cluster_name, region, job_id):
@@ -178,15 +159,27 @@ def submit_train_job (project_id, cluster_name, region, job_id):
         }
     }
 
-    job_instance = job_client.submit_job(
+    job_client.submit_job(
         request={"project_id": project_id, "region": region, "job": job}
     )
 
-    job_reference = str.lower(str(job_instance.reference.job_id))
-    job_state = str.lower(str(job_instance.status.state))
-    print(job_state)
-    # if job_state != 'done':
-    #     logging.info(f"Job {job_reference} finished successfully!")
+def check_if_cluster (project_id, cluster_name, region):
+    '''
+    Check if cluster already exists
+    :param project_id:
+    :param cluster_name:
+    :param region:
+    :return:
+    '''
+
+    # Create a client with the endpoint set to the desired cluster region.
+    cluster_client = dataproc.ClusterControllerClient(
+        client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
+    )
+    try:
+        return cluster_client.get_cluster(project_id, region, cluster_name)
+    except:
+        return None
 
 def delete_cluster (project_id, cluster_name, region):
     '''
@@ -202,15 +195,11 @@ def delete_cluster (project_id, cluster_name, region):
         client_options={"api_endpoint": f"{region}-dataproc.googleapis.com:443"}
     )
 
-    operation = cluster_client.delete_cluster(
+    cluster_client.delete_cluster(
         request={"project_id": project_id, "region": region, "cluster_name": cluster_name}
     )
 
-    result = operation.result()
-    print(result)
-    # Output a success message.
-    logging.info(f"Cluster deletes successfully!")
-
+# Main --------------------------------------------------------------------------------------------------------------
 
 def main (event, context):
     '''
@@ -239,15 +228,21 @@ def main (event, context):
 
     # Because we upload several files in a loop, the function will be trigger n times where
     # n is the number of files uploaded. We need to create a filter.
-    logging.info(event['name'])
+
     if event['name'] == 'model/train.py':
+        logging.info(f"A new model version is register under {BUCKET_NAME}/{event['name']}")
+        logging.info("A new training process is starting...")
         logging.info(f"Creating cluster {CLUSTER_NAME}...")
         cluster = create_cluster(PROJECT_ID, CLUSTER_NAME, BUCKET_NAME, REGION, ZONE, PIP_PACKAGES)
         logging.info(f"Submitting job {JOB_ID}...")
         cluster.add_done_callback(lambda _: submit_train_job(PROJECT_ID, CLUSTER_NAME, REGION, JOB_ID))
-        # while check_job_state(PROJECT_ID, REGION, JOB_ID) != 'done':
-        #     logging.info(f"Job {JOB_ID} is running...")
-        #     time.sleep(5)
-        # logging.info(f"Job {JOB_ID} is {check_job_state(PROJECT_ID, REGION, JOB_ID)}")
-        # logging.info(f"Deleting cluster {CLUSTER_NAME}...")
-        # delete_cluster(PROJECT_ID, CLUSTER_NAME, REGION)
+        while check_job_state(PROJECT_ID, REGION, JOB_ID) != 'state.done':
+            logging.info(f"Job {JOB_ID} is running...")
+            time.sleep(5)
+        logging.info(f"Job {JOB_ID} is done!")
+        logging.info(f"Deleting cluster {CLUSTER_NAME}...")
+        delete_cluster(PROJECT_ID, CLUSTER_NAME, REGION)
+        while check_if_cluster(PROJECT_ID, CLUSTER_NAME, REGION) != None:
+            logging.info(f"Deleting {CLUSTER_NAME}...")
+            time.sleep(2)
+        logging.info(f"Cluster {CLUSTER_NAME} deleted!")
