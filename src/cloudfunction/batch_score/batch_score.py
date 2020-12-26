@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-batch_train.py is the module for create an
-ephemeral Dataproc and train the model in batch.
+batch_score.py is the module for create an
+ephemeral Dataproc and score the model in batch.
 
 Steps:
 1 - Create a custom Dataproc Cluster
-2 - Train the model
+2 - Score the model
 3 - Delete the cluster
 
 Look at documentation from GCP
@@ -127,9 +127,9 @@ def check_job_state (project_id, region, job_id):
     job_state = str.lower(str(job_instance.status.state))
     return job_state
 
-def submit_train_job (project_id, cluster_name, region, job_id):
+def submit_score_job (project_id, cluster_name, region, job_id):
     '''
-    Submit batch train job
+    Submit score train job
     :param project_id: The name of project to use for creating resources.
     :param cluster_name: The name of cluster
     :param region: The name of the region
@@ -142,7 +142,7 @@ def submit_train_job (project_id, cluster_name, region, job_id):
     })
 
     # Create the job config.
-    # gcloud dataproc jobs submit pyspark gs://network-spark-migrate/model/train.py --cluster train-spark-demo
+    # gcloud dataproc jobs submit pyspark gs://network-spark-migrate/model/score.py --cluster train-spark-demo
     # --region europe-west6 --files=gs://network-spark-migrate/model/demo-config.yml -- --configfile ./demo-config.yml
     job = {
         'reference': {
@@ -153,7 +153,7 @@ def submit_train_job (project_id, cluster_name, region, job_id):
             'cluster_name': cluster_name
         },
         'pyspark_job': {
-            'main_python_file_uri': 'gs://network-spark-migrate/model/train.py',
+            'main_python_file_uri': 'gs://network-spark-migrate/model/score.py',
             'file_uris': ['gs://network-spark-migrate/model/demo-config.yml'],
             'args': ['--configfile', './demo-config.yml']
         }
@@ -211,12 +211,12 @@ def main (event, context):
 
     # Variables
     PROJECT_ID = 'sas-ivnard'
-    CLUSTER_NAME = 'train-spark-demo'
+    CLUSTER_NAME = 'score-spark-demo'
     BUCKET_NAME = 'network-spark-migrate'
     REGION = 'europe-west6'
     ZONE = 'europe-west6-b'
     PIP_PACKAGES = "PyYAML==5.3.1 numpy==1.19.4 pandas==1.1.4 pyspark==3.0.1"
-    JOB_ID = 'Batch_Train_Model'
+    JOB_ID = 'Batch_Model_Score'
 
     logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
@@ -228,14 +228,13 @@ def main (event, context):
 
     # Because we upload several files in a loop, the function will be trigger n times where
     # n is the number of files uploaded. We need to create a filter.
-
-    if event['name'] == 'model/train.py':
-        logging.info(f"A new model version is register under {BUCKET_NAME}/{event['name']}")
-        logging.info("A new training process is starting...")
+    # Notice: I have to investigate more. For demo purposes, it's enough.
+    if event['name'] == 'data/ML-MATT-CompetitionQT1920_val_processed.parquet/_SUCCESS':
+        logging.info("A new scoring process is starting...")
         logging.info(f"Creating cluster {CLUSTER_NAME}...")
         cluster = create_cluster(PROJECT_ID, CLUSTER_NAME, BUCKET_NAME, REGION, ZONE, PIP_PACKAGES)
         logging.info(f"Submitting job {JOB_ID}...")
-        cluster.add_done_callback(lambda _: submit_train_job(PROJECT_ID, CLUSTER_NAME, REGION, JOB_ID))
+        cluster.add_done_callback(lambda _: submit_score_job(PROJECT_ID, CLUSTER_NAME, REGION, JOB_ID))
         while check_job_state(PROJECT_ID, REGION, JOB_ID) != 'state.done':
             logging.info(f"Job {JOB_ID} is running...")
             time.sleep(5)
