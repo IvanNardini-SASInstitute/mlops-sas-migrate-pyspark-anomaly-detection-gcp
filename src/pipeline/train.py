@@ -234,13 +234,18 @@ def run_training (args):
 
     # Save training data
     logging.info('Save all the process outputs')
+    # Save trained pipeline
+    logging.info('Saving pipeline...')
+    save_pipeline(gbt_model, output['pipeline_path'])
+    # Save predictions
+    logging.info('Saving predictions...')
     predictions_test_fmt = predictions_test.withColumn('P_Unusual0', extract0_udf('probability')).withColumn(
          'P_Unusual1', extract1_udf('probability')).select(output['columnschema_train'])
     write_parquet(predictions_test_fmt, output['test_scored_path'])
     # Save metrics
+    logging.info('Saving metrics...')
     write_parquet(metrics_df, output['metrics_scored_path'])
-    # Save trained pipeline
-    save_pipeline(gbt_model, output['pipeline_path'])
+
 
 if __name__ == "__main__":
     #logging.config.fileConfig("../../config/logging/local.conf")
