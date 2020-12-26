@@ -17,14 +17,14 @@ and SAS Workflow Manager
 Below the on-premise application architecture of the solution:
 
 <p align="center">
-<img src="https://github.com/IvanNardini/mlops_sas_gcp_spark/raw/master/mm_gcp.png">
+<img src="https://github.com/IvanNardini/mlops_sas_gcp_spark/raw/master/mm_gcp_final.png">
 </p>
 
 ## Scenario Description
 
-In as-is: 
+In the as-is: 
 
-0. Data Scientist submits pyspark job to Hadoop-Spark cluster on premise. 
+Data Scientist submits pyspark job to Hadoop-Spark cluster on premise. 
 
 Then migration starts. Then: 
 
@@ -98,7 +98,8 @@ If everything is correct, you can move on and
 
 Please look at [cloud functions images folder](docs/images/cloud_functions/batch-train1.JPG)
 as reference.
-All code associated to cloud functions is under [cloudfunction](src/cloudfunction/batch_train/batch_train.py)
+
+All code associated to cloud functions is under [cloudfunction folder](src/cloudfunction/batch_train/batch_train.py).
 
 ## Usage
 
