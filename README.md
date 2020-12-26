@@ -31,14 +31,23 @@ Then migration starts. Then:
 1. Data Scientist creates several pyspark model packages. And he registers different versions in SAS® Model Manager 
 using [SAS® sasctl](https://github.com/sassoftware/python-sasctl).
 
-2. Big Data Engineer maps on-prem cluster configuration and create a templates. Then DevOps engineer
-may create a cloud function to deploy the cluster (and submit jobs) on Google Cloud Platform
+2. Big Data Engineer maps on-prem cluster configuration and create a templates. 
+
+3. Then DevOps engineer may create cloud functions to deploy the cluster (and submit train and score jobs) on Google Cloud Platform
 
 Then, the workflow starts and
 
-3. Each actor involved in the process claims and completes user tasks.
-In this case, a Validator approve the Champion model. And an IT provides
-Cloud bucket name for migration. 
+4. Each actor involved in the process claims and completes user tasks. In this case, a Validator approve the Champion model. And an IT provides
+Cloud bucket name for migration. Once the model is migrated on predefined Cloud storage bucket, either Big Data Engineer or DevOps receive a
+notification.
+
+A new model training is processed in an ephemeral Cloud Dataproc and the trained pipeline is stored ready to score new data.
+For sick of simplicity
+
+5. A final user loads parquet files to score in the predefined Cloud Storage bucket.
+
+A new scoring process is triggered by Cloud function and scored data are stored in the same
+Cloud Storage bucket.
 
 ## Installation
 
