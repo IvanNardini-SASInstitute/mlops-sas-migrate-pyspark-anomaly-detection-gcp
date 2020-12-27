@@ -2,9 +2,9 @@ sparksession:
   master: 'local[*]'
   appName: 'Anomaly Detection'
 data:
-  train_datapath: gs://network-migrate/data/ML-MATT-CompetitionQT1920_train_processed.parquet
-  test_datapath: gs://network-migrate/data/ML-MATT-CompetitionQT1920_test_processed.parquet
-  datatoscore_path: gs://network-migrate/data/ML-MATT-CompetitionQT1920_val_processed.parquet
+  train_datapath: gs://network-spark-migrate/data/ML-MATT-CompetitionQT1920_train_processed.parquet
+  test_datapath: gs://network-spark-migrate/data/ML-MATT-CompetitionQT1920_test_processed.parquet
+  datatoscore_path: gs://network-spark-migrate/data/ML-MATT-CompetitionQT1920_val_processed.parquet
 pipeline:
   variables:
     categoricals: ['hour', 'minutes']
@@ -26,7 +26,7 @@ output:
   showschema_score: ['CellName', 'features', 'rawPrediction', 'probability', 'prediction']
   columnschema_train: ['CellName', 'Unusual', 'hour', 'minutes', 'PRBUsageUL', 'PRBUsageDL', 'meanThr_DL', 'meanThr_UL', 'maxThr_DL', 'maxThr_UL', 'meanUE_DL', 'meanUE_UL', 'maxUE_DL', 'maxUE_UL', 'P_Unusual0', 'P_Unusual1']
   columnschema_score: ['CellName', 'hour', 'minutes', 'PRBUsageUL', 'PRBUsageDL', 'meanThr_DL', 'meanThr_UL', 'maxThr_DL', 'maxThr_UL', 'meanUE_DL', 'meanUE_UL', 'maxUE_DL', 'maxUE_UL', 'P_Unusual0', 'P_Unusual1']
-  test_scored_path: gs://network-migrate/output/data/
-  metrics_scored_path: gs://network-migrate/output/metrics/
-  pipeline_path: gs://network-migrate/output/model/
-  datascored_path: gs://network-migrate/output/scored/
+  test_scored_path: gs://network-spark-migrate/output/data/
+  metrics_scored_path: gs://network-spark-migrate/output/metrics/
+  pipeline_path: gs://network-spark-migrate/output/model/
+  datascored_path: gs://network-spark-migrate/output/scored/
