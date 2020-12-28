@@ -3,6 +3,7 @@ docs/architecture
 docs/presentation
 docs/records
 docs/references
+docs/post
 data/interim/*
 data/processed/*
 env/*

@@ -26,7 +26,7 @@ In the as-is:
 
 Data Scientist submits pyspark job to Hadoop-Spark cluster on premise. 
 
-Then migration starts. Then: 
+Then migration starts: 
 
 1. Data Scientist creates several pyspark model packages. And he registers different versions in SAS® Model Manager 
 using [SAS® sasctl](https://github.com/sassoftware/python-sasctl).
