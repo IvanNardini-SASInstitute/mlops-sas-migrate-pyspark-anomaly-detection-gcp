@@ -17,7 +17,7 @@ and SAS Workflow Manager
 Below the on-premise application architecture of the solution:
 
 <p align="center">
-<img src="https://github.com/IvanNardini/mlops_sas_gcp_spark/raw/master/mm_gcp_final.png">
+<img src="https://github.com/IvanNardini-SASInstitute/mlops-sas-migrate-pyspark-anomaly-detection-gcp/raw/master/mm_gcp_final.png">
 </p>
 
 ## Scenario Description
