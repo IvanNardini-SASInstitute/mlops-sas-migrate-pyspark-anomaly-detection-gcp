@@ -1,8 +1,8 @@
 workflow:
   build:
-    hostname: rusid1.rus.sas.com
-    username: russasdemo
-    password: Orion123
+    hostname: xxxxxx
+    username: xxxxxx
+    password: xxxxxx
     #modelpath: "../model"
     modelpath: "./src/workflow/model"
   migrate:
